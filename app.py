@@ -1,25 +1,48 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, abort
+import json
 
 app = Flask(__name__)
+
+
+class Teacher:
+    def __init__(self):
+        # File is not very big, so I download it into memory
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+
+        self.goals = data['goals']
+        self.teachers = data['teachers']
+
+    def get_teacher(self, id_teacher):
+        teacher = dict()
+        for t in self.teachers:
+            if t['id'] == id_teacher:
+                teacher = t
+
+        return teacher
 
 
 # Main page
 @app.route('/')
 def main():
-
     return render_template('index.html')
 
 
 # Page with result according to a goal of studying
 @app.route('/goals/<goal>/')
-def get_goal(goal):
+def goal(goal):
     return render_template('goal.html')
 
 
 # Teacher's profile
 @app.route('/profiles/<id_teacher>/')
 def get_profile(id_teacher):
-    return render_template('profile.html')
+    id_teacher = int(id_teacher)
+    teacher = Teacher().get_teacher(id_teacher)
+    if 'id' not in teacher:
+        abort(404, description="Teacher not found")
+
+    return render_template('profile.html', teacher=teacher, goals=Teacher().goals)
 
 
 # Request for a teacher
