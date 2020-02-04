@@ -61,6 +61,26 @@
             <th>Сб</th>
             <th>Вс</th>
           </tr>
+          {% for ToD, schedule in time_table.items() %}
+            <tr>
+              <td><span class="btn">{{ ToD }}</span></td>
+              {% for DoW, status in schedule.items() %}
+                {% if DoW in ['mon', 'tue', 'wed', 'thu', 'fri'] %}
+                  {% if status is true %}
+                    {% set btn_status = "btn btn-sm btn-success" %}
+                  {% else %}
+                    {% set btn_status = "btn btn-sm btn-secondary" %}
+                  {% endif %}
+
+                  {% set booking_link = "/booking/{}/{}/{}".format(teacher.id, DoW, ToD) %}
+                  <td><a href="{{ booking_link }}" class="{{ btn_status }}">{{ ToD }} </a></td>
+                {% endif %}
+              {% endfor %}
+              <td>-</td>
+              <td>-</td>
+            </tr>
+          {% endfor %}
+          {#
           <tr>
             <td><span class="btn">8:00</span></td>
             <td><a href="booking.html" class="btn btn-sm btn-secondary">8:00</a></td>
@@ -111,6 +131,7 @@
             <td>-</td>
             <td>-</td>
           </tr>
+          #}
         </table>
       </div>
     </div>

@@ -42,7 +42,16 @@ def get_profile(id_teacher):
     if 'id' not in teacher:
         abort(404, description="Teacher not found")
 
-    return render_template('profile.html', teacher=teacher, goals=Teacher().goals)
+    # Re-arranging dictionary of teacher time-table
+    time_table = dict()
+    for DoW, time_statue in teacher['free'].items():
+        for tm, status in time_statue.items():
+            if tm in time_table:
+                time_table[tm][DoW] = status
+            else:
+                time_table[tm] = {DoW: status}
+
+    return render_template('profile.html', teacher=teacher, goals=Teacher().goals, time_table=time_table)
 
 
 # Request for a teacher
