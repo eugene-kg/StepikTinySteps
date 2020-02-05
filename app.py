@@ -42,7 +42,7 @@ def get_profile(id_teacher):
     if 'id' not in teacher:
         abort(404, description="Teacher not found")
 
-    # Re-arranging dictionary of teacher time-table
+    # Re-arranging dictionary of teacher time-table to simplify logic in the template
     time_table = dict()
     for DoW, time_statue in teacher['free'].items():
         for tm, status in time_statue.items():

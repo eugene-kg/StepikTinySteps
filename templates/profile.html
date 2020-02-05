@@ -33,7 +33,7 @@
     <div class="card my-4 mx-auto">
       <div class="card-body m-2 m-md-4">
         <div class="row">
-          <div class="col-5"><img src="{{ teacher.picture }}" class="img-fluid" alt=""></div>
+          <div class="col-5"><img src="{{ teacher.picture }}" class="img-fluid" alt="Photo of a teacher"></div>
           <div class="col-7">
             <h1 class="h2">{{ teacher.name }}</h1>
             <p>
@@ -61,77 +61,25 @@
             <th>Сб</th>
             <th>Вс</th>
           </tr>
-          {% for ToD, schedule in time_table.items() %}
+          {% for time_of_day, schedule in time_table.items() %}
             <tr>
               <td><span class="btn">{{ ToD }}</span></td>
-              {% for DoW, status in schedule.items() %}
-                {% if DoW in ['mon', 'tue', 'wed', 'thu', 'fri'] %}
+              {% for day_of_week, status in schedule.items() %}
+                {% if day_of_week in ['mon', 'tue', 'wed', 'thu', 'fri'] %}
                   {% if status is true %}
                     {% set btn_status = "btn btn-sm btn-success" %}
                   {% else %}
                     {% set btn_status = "btn btn-sm btn-secondary" %}
                   {% endif %}
 
-                  {% set booking_link = "/booking/{}/{}/{}".format(teacher.id, DoW, ToD) %}
-                  <td><a href="{{ booking_link }}" class="{{ btn_status }}">{{ ToD }} </a></td>
+                  {% set booking_link = "/booking/{}/{}/{}".format(teacher.id, day_of_week, time_of_day) %}
+                  <td><a href="{{ booking_link }}" class="{{ btn_status }}">{{ time_of_day }} </a></td>
                 {% endif %}
               {% endfor %}
               <td>-</td>
               <td>-</td>
             </tr>
           {% endfor %}
-          {#
-          <tr>
-            <td><span class="btn">8:00</span></td>
-            <td><a href="booking.html" class="btn btn-sm btn-secondary">8:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">8:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">8:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">8:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">8:00</a></td>
-            <td>-</td>
-            <td>-</td>
-          </tr>
-          <tr>
-            <td><span class="btn">10:00</span></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">10:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">10:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">10:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">10:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">10:00</a></td>
-            <td>-</td>
-            <td>-</td>
-          </tr>
-          <tr>
-            <td><span class="btn">12:00</span></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">12:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">12:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">12:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">12:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">12:00</a></td>
-            <td>-</td>
-            <td>-</td>
-          </tr>
-          <tr>
-            <td><span class="btn">14:00</span></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">14:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">14:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">14:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">14:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">14:00</a></td>
-            <td>-</td>
-            <td>-</td>
-          </tr>
-          <tr>
-            <td><span class="btn">16:00</span></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">16:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">16:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">16:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-success">16:00</a></td>
-            <td><a href="#" class="btn btn-sm btn-secondary">16:00</a></td>
-            <td>-</td>
-            <td>-</td>
-          </tr>
-          #}
         </table>
       </div>
     </div>
