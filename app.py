@@ -4,13 +4,14 @@ import json
 app = Flask(__name__)
 
 
-class Teacher:
+class Data:
     def __init__(self):
         # File is not very big, so I download it into memory
         with open('data.json', 'r') as f:
             data = json.load(f)
 
         self.goals = data['goals']
+        self.days_of_week = data['days_of_week']
         self.teachers = data['teachers']
 
     def get_teacher(self, id_teacher):
@@ -38,20 +39,20 @@ def goal(goal):
 @app.route('/profiles/<id_teacher>/')
 def get_profile(id_teacher):
     id_teacher = int(id_teacher)
-    teacher = Teacher().get_teacher(id_teacher)
+    teacher = Data().get_teacher(id_teacher)
     if 'id' not in teacher:
         abort(404, description="Teacher not found")
 
     # Re-arranging dictionary of teacher time-table to simplify logic in the template
     time_table = dict()
-    for DoW, time_statue in teacher['free'].items():
-        for tm, status in time_statue.items():
-            if tm in time_table:
-                time_table[tm][DoW] = status
+    for weekday_key, time_status in teacher['free'].items():
+        for time_of_day, status in time_status.items():
+            if time_of_day in time_table:
+                time_table[time_of_day][weekday_key] = status
             else:
-                time_table[tm] = {DoW: status}
+                time_table[time_of_day] = {weekday_key: status}
 
-    return render_template('profile.html', teacher=teacher, goals=Teacher().goals, time_table=time_table)
+    return render_template('profile.html', teacher=teacher, goals=Data().goals, time_table=time_table)
 
 
 # Request for a teacher
@@ -67,9 +68,14 @@ def request_done():
 
 
 # Form for booking a teacher
-@app.route('/booking/<id_teacher>/<day_of_week>/<time_of_day>/')
-def booking_teacher(id_teacher, day_of_week, time_of_day):
-    return render_template('booking.html')
+@app.route('/booking/<id_teacher>/<weekday_key>/<time_of_day>/')
+def booking_teacher(id_teacher, weekday_key, time_of_day):
+    teacher = Data().get_teacher(int(id_teacher))
+    if 'id' not in teacher:
+        abort(404, description="Teacher not found")
+    day_of_week = Data().days_of_week[weekday_key]
+
+    return render_template('booking.html', teacher=teacher, time_of_day=time_of_day, day_of_week=day_of_week)
 
 
 # Booking request was received
