@@ -1,4 +1,4 @@
-from flask import Flask, render_template, abort
+from flask import Flask, render_template, abort, request
 import json
 
 app = Flask(__name__)
@@ -79,8 +79,29 @@ def booking_teacher(id_teacher, weekday_key, time_of_day):
 
 
 # Booking request was received
-@app.route('/booking_done/')
+@app.route('/booking_done/', methods=['POST'])
 def booking_done():
+
+    weekday_key = request.form.get('clientWeekday')
+    time_of_day = request.form.get('clientTime')
+    id_teacher = request.form.get('clientTeacher')
+    client_name = request.form.get('clientName')
+    client_phone = request.form.get('clientPhone')
+
+    new_booking = dict()
+    new_booking['weekday_key'] = weekday_key
+    new_booking['time_of_day'] = time_of_day
+    new_booking['id_teacher'] = id_teacher
+    new_booking['client_name'] = client_name
+    new_booking['client_phone'] = client_phone
+
+    with open('booking.json', "r") as f:
+        data = json.load(f)
+
+
+
+    # with open('data.json', 'w') as f:
+    #     json.dump(data_dict, f)
     return render_template('booking_done.html')
 
 
