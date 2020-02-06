@@ -1,5 +1,6 @@
 from flask import Flask, render_template, abort, request
 import json
+import os
 
 app = Flask(__name__)
 
@@ -81,7 +82,6 @@ def booking_teacher(id_teacher, weekday_key, time_of_day):
 # Booking request was received
 @app.route('/booking_done/', methods=['POST'])
 def booking_done():
-
     weekday_key = request.form.get('clientWeekday')
     time_of_day = request.form.get('clientTime')
     id_teacher = request.form.get('clientTeacher')
@@ -89,20 +89,30 @@ def booking_done():
     client_phone = request.form.get('clientPhone')
 
     new_booking = dict()
+    booking_key = '{}_{}_{}'.format(id_teacher, weekday_key, time_of_day)
+
     new_booking['weekday_key'] = weekday_key
     new_booking['time_of_day'] = time_of_day
     new_booking['id_teacher'] = id_teacher
     new_booking['client_name'] = client_name
     new_booking['client_phone'] = client_phone
 
-    with open('booking.json', "r") as f:
-        data = json.load(f)
+    booking_file_path = 'booking.json'
+    data = dict()
 
+    # Check if file for booking exists
+    if os.path.exists(booking_file_path):
+        with open(booking_file_path, "r") as f:
+            data = json.load(f)
 
+    data[booking_key] = new_booking
+    with open(booking_file_path, 'w') as f:
+        json.dump(data, f)
 
-    # with open('data.json', 'w') as f:
-    #     json.dump(data_dict, f)
-    return render_template('booking_done.html')
+    day_of_week = Data().days_of_week[weekday_key]
+
+    return render_template('booking_done.html', day_of_week=day_of_week, client_name=client_name,
+                           client_phone=client_phone, time_of_day=time_of_day)
 
 
 @app.errorhandler(404)
@@ -118,7 +128,6 @@ def server_error(e):
 # Flask server (for debugging)
 app.run()
 
-
 # Run server with gunicorn
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #    app.run()
