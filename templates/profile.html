@@ -38,7 +38,7 @@
             <h1 class="h2">{{ teacher.name }}</h1>
             <p>
               {% for goal_key in teacher.goals %}
-                <span class="badge badge-secondary mr-2">{{ goals[goal_key] }} </span>
+                <span class="badge badge-secondary mr-2">{{ goals[goal_key]['rus_name'] }} </span>
               {% endfor %}
               Рейтинг: {{ teacher.rating }} Ставка: {{ teacher.price }} / час
             </p>

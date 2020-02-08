@@ -34,7 +34,15 @@ def main():
 # Page with result according to a goal of studying
 @app.route('/goals/<goal>/')
 def goal(goal):
-    return render_template('goal.html')
+    teachers = Data().teachers
+
+    # Filling in a new list of teachers, using the condition that the goal is among the teacher goals
+    teachers_with_goal = list()
+    for teacher in teachers:
+        if goal in teacher['goals']:
+            teachers_with_goal.append(teacher)
+
+    return render_template('goal.html', teachers=teachers_with_goal, goal=goal, goals=Data().goals)
 
 
 # Teacher's profile
