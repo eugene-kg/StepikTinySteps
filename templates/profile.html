@@ -68,11 +68,13 @@
                 {% if weekday_key in ['mon', 'tue', 'wed', 'thu', 'fri'] %}
                   {% if status is true %}
                     {% set btn_status = "btn btn-sm btn-success" %}
+                    {% set booking_link = "/booking/{}/{}/{}".format(teacher.id, weekday_key, time_of_day) %}
                   {% else %}
                     {% set btn_status = "btn btn-sm btn-secondary" %}
+                    {% set booking_link = "#" %}
                   {% endif %}
 
-                  {% set booking_link = "/booking/{}/{}/{}".format(teacher.id, weekday_key, time_of_day) %}
+
                   <td><a href="{{ booking_link }}" class="{{ btn_status }}">{{ time_of_day }} </a></td>
                 {% endif %}
               {% endfor %}

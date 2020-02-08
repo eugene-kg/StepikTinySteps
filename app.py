@@ -14,6 +14,7 @@ class Data:
         self.goals = data['goals']
         self.days_of_week = data['days_of_week']
         self.teachers = data['teachers']
+        self.available_time = data['available_time']
 
     def get_teacher(self, id_teacher):
         teacher = dict()
@@ -59,13 +60,37 @@ def get_profile(id_teacher):
 # Request for a teacher
 @app.route('/request/')
 def request_for_teacher():
-    return render_template('request.html')
+    return render_template('request.html', goals=Data().goals, available_time=Data().available_time)
 
 
 # Request for a teacher was received
-@app.route('/request_done/')
+@app.route('/request_done/', methods=["POST"])
 def request_done():
-    return render_template('request_done.html')
+    request_goal = request.form.get('goal')
+    request_time = request.form.get('time')
+    client_name = request.form.get('clientName')
+    client_phone = request.form.get('clientPhone')
+
+    request_details = dict()
+    request_details['goal'] = request_goal
+    request_details['time'] = request_time
+    request_details['client_name'] = client_name
+    request_details['client_phone'] = client_phone
+
+    request_file_path = 'request.json'
+    data = list()
+
+    # Check if file for booking exists
+    if os.path.exists(request_file_path):
+        with open(request_file_path, "r") as f:
+            data = json.load(f)
+
+    data.append(request_details)
+    with open(request_file_path, 'w') as f:
+        json.dump(data, f)
+
+    return render_template('request_done.html', request_details=request_details, available_time=Data().available_time,
+                           goals=Data().goals)
 
 
 # Form for booking a teacher
