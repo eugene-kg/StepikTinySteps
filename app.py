@@ -162,8 +162,8 @@ def server_error(e):
 
 
 # Flask server (for debugging)
-app.run()
+#app.run()
 
 # Run server with gunicorn
-# if __name__ == '__main__':
-#    app.run()
+if __name__ == '__main__':
+    app.run()
