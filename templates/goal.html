@@ -34,7 +34,7 @@
 
       <div class="row">
       <div class="col-12 col-lg-10 offset-lg-1 m-auto">
-        {% for teacher in teachers %}
+        {% for teacher in teachers|sort(reverse=true, attribute="rating") %}
           <div class="card mb-4">
             <div class="card-body">
               <div class="row">
@@ -51,51 +51,6 @@
             </div>
           </div>
         {% endfor %}
-        {#
-        <div class="card mb-4">
-          <div class="card-body">
-            <div class="row">
-              <div class="col-3"><img src="../static/pict 1.png" class="img-fluid" alt=""></div>
-              <div class="col-9">
-                <p class="float-right">Рейтинг: 4.8 Ставка: 1200 / час</p>
-                <h2 class="h4">Morris Simmmons</h2>
-                <p>Репетитор американского английского языка. Структурированная система обучения. Всем привет! Я предпочитаю называть себя «тренером» английского языка. Мои занятия похожи на тренировки</p>
-                <a href="profile.html" class="btn btn-outline-primary btn-sm mr-3 mb-2">Показать информаци и расписание</a>
-
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card mb-4">
-          <div class="card-body">
-            <div class="row">
-              <div class="col-3"><img src="../static/pict 2.png" class="img-fluid" alt=""></div>
-              <div class="col-9">
-                <p class="float-right">Рейтинг: 4.8 Ставка: 900 / час</p>
-                <h2 class="h4">Julie Nguyen</h2>
-                <p>Сертифицированный репетитор IELTS. Являюсь сертифицировнным CELTA преподавателем английского языка, проживающим за границей. Опыт работы в сфере преподавания - 9 лет.</p>
-                <a href="#" class="btn btn-outline-primary btn-sm mr-3 mb-2">Показать информаци и расписание</a>
-
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card mb-4">
-          <div class="card-body">
-            <div class="row">
-              <div class="col-3"><img src="../static/pict 3.png" class="img-fluid" alt=""></div>
-              <div class="col-9">
-                <p class="float-right">Рейтинг: 4.8 Ставка: 1300 / час</p>
-                <h2 class="h4">Wendy Edwards</h2>
-                <p>Молодой и современный репетитор и переводчик с четырёхлетним опытом работы репетиторства Индивидуальные занятия по скайпу, которые ведёт молодой специалист отделения "Перевода </p>
-                <a href="#" class="btn btn-outline-primary btn-sm mr-3 mb-2">Показать информаци и расписание</a>
-
-              </div>
-            </div>
-          </div>
-        </div>
-        #}
       </div>
     </div>
 
