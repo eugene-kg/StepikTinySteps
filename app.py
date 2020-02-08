@@ -1,6 +1,7 @@
 from flask import Flask, render_template, abort, request
 import json
 import os
+import random
 
 app = Flask(__name__)
 
@@ -28,7 +29,9 @@ class Data:
 # Main page
 @app.route('/')
 def main():
-    return render_template('index.html')
+    teachers = Data().teachers
+    random.shuffle(teachers)
+    return render_template('index.html', goals=Data().goals, teachers=teachers)
 
 
 # Page with result according to a goal of studying
