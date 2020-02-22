@@ -1,9 +1,14 @@
 from flask import Flask, render_template, abort, request
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import json
 import os
 import random
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tiny_steps.db"
+db = SQLAlchemy(app)
+migrate = Migrate(app=app, db=db)
 
 
 class Data:
@@ -162,8 +167,8 @@ def server_error(e):
 
 
 # Flask server (for debugging)
-#app.run()
+app.run()
 
 # Run server with gunicorn
-if __name__ == '__main__':
-    app.run()
+#if __name__ == '__main__':
+#    app.run()
