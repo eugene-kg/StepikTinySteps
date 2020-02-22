@@ -1,9 +1,11 @@
+import os
+import json
+import random
+
 from flask import Flask, render_template, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-import json
-import os
-import random
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tiny_steps.db"
@@ -13,55 +15,85 @@ migrate = Migrate(app=app, db=db)
 
 class Data:
     def __init__(self):
-        # File is not very big, so I download it into memory
+
         with open('data.json', 'r') as f:
             data = json.load(f)
 
-        self.goals = data['goals']
-        self.days_of_week = data['days_of_week']
-        self.teachers = data['teachers']
-        self.available_time = data['available_time']
+        self.__goals = data['goals']
+        self.__days_of_week = data['days_of_week']
+        self.__teachers = data['teachers']
+        self.__available_time = data['available_time']
 
     def get_teacher(self, id_teacher):
-        teacher = dict()
-        for t in self.teachers:
-            if t['id'] == id_teacher:
-                teacher = t
+        teacher = list(filter(lambda t: t['id'] == 0, self.teachers))[0]
 
         return teacher
 
+    @property
+    def goals(self):
+        return self.__goals
 
-# Main page
+    @property
+    def days_of_week(self):
+        return self.__days_of_week
+
+    @property
+    def teachers(self):
+        return self.__teachers
+
+    @property
+    def available_time(self):
+        return self.__available_time
+
+
 @app.route('/')
 def main():
-    teachers = Data().teachers
+    """
+    Main page: contains main menu and list of random teachers
+    :return: render main page
+    """
+    data = Data()
+    teachers = data.teachers
     random.shuffle(teachers)
-    return render_template('index.html', goals=Data().goals, teachers=teachers)
+    return render_template('index.html',
+                           goals=data.goals,
+                           teachers=teachers)
 
 
-# Page with result according to a goal of studying
 @app.route('/goals/<goal>/')
 def goal(goal):
-    teachers = Data().teachers
+    """
+    Show list of teacher which can help to train for a specific goal
+    :param goal: goal of studying
+    :return: page with list of teachers
+    """
+    data = Data()
 
-    # Filling in a new list of teachers, using the condition that the goal is among the teacher goals
-    teachers_with_goal = list()
-    for teacher in teachers:
-        if goal in teacher['goals']:
-            teachers_with_goal.append(teacher)
+    # Keep only teachers who has the goal in their list of goals
+    teachers_with_goal = list(filter(lambda t: goal in t['goals'],
+                                     data.teachers))
 
-    return render_template('goal.html', teachers=teachers_with_goal, goal=goal, goals=Data().goals)
+    return render_template('goal.html',
+                           teachers=teachers_with_goal,
+                           goal=goal,
+                           goals=data.goals)
 
 
-# Teacher's profile
 @app.route('/profiles/<id_teacher>/')
 def get_profile(id_teacher):
+    """
+    Teacher's profile
+    :param id_teacher: id of teacher
+    :return:
+    """
     id_teacher = int(id_teacher)
-    teacher = Data().get_teacher(id_teacher)
+    data = Data()
+    teacher = data.get_teacher(id_teacher)
     if 'id' not in teacher:
         abort(404, description="Teacher not found")
 
-    # Re-arranging dictionary of teacher time-table to simplify logic in the template
+    # Re-arranging dictionary of teacher time-table
+    # to simplify logic in the template
     time_table = dict()
     for weekday_key, time_status in teacher['free'].items():
         for time_of_day, status in time_status.items():
@@ -70,18 +102,30 @@ def get_profile(id_teacher):
             else:
                 time_table[time_of_day] = {weekday_key: status}
 
-    return render_template('profile.html', teacher=teacher, goals=Data().goals, time_table=time_table)
+    return render_template('profile.html',
+                           teacher=teacher,
+                           goals=data.goals,
+                           time_table=time_table)
 
 
-# Request for a teacher
 @app.route('/request/')
 def request_for_teacher():
-    return render_template('request.html', goals=Data().goals, available_time=Data().available_time)
+    """
+    Open form with request for a teacher
+    :return:
+    """
+    data = Data()
+    return render_template('request.html',
+                           goals=data.goals,
+                           available_time=data.available_time)
 
 
-# Request for a teacher was received
 @app.route('/request_done/', methods=["POST"])
 def request_done():
+    """
+    Process data from request for a teacher
+    :return:
+    """
     request_goal = request.form.get('goal')
     request_time = request.form.get('time')
     client_name = request.form.get('clientName')
@@ -94,35 +138,51 @@ def request_done():
     request_details['client_phone'] = client_phone
 
     request_file_path = 'request.json'
-    data = list()
+    request_data = list()
 
     # Check if file for booking exists
     if os.path.exists(request_file_path):
         with open(request_file_path, "r") as f:
-            data = json.load(f)
+            request_data = json.load(f)
 
-    data.append(request_details)
+    request_data.append(request_details)
     with open(request_file_path, 'w') as f:
-        json.dump(data, f)
+        json.dump(request_data, f)
 
-    return render_template('request_done.html', request_details=request_details, available_time=Data().available_time,
-                           goals=Data().goals)
+    data = Data()
+    return render_template('request_done.html',
+                           request_details=request_details,
+                           available_time=data.available_time,
+                           goals=data.goals)
 
 
-# Form for booking a teacher
 @app.route('/booking/<id_teacher>/<weekday_key>/<time_of_day>/')
 def booking_teacher(id_teacher, weekday_key, time_of_day):
-    teacher = Data().get_teacher(int(id_teacher))
+    """
+    Form for booking a teacher
+    :param id_teacher:
+    :param weekday_key:
+    :param time_of_day:
+    :return:
+    """
+    data = Data()
+    teacher = data.get_teacher(int(id_teacher))
     if 'id' not in teacher:
         abort(404, description="Teacher not found")
-    day_of_week = Data().days_of_week[weekday_key]
+    day_of_week = data.days_of_week[weekday_key]
 
-    return render_template('booking.html', teacher=teacher, time_of_day=time_of_day, day_of_week=day_of_week)
+    return render_template('booking.html',
+                           teacher=teacher,
+                           time_of_day=time_of_day,
+                           day_of_week=day_of_week)
 
 
-# Booking request was received
 @app.route('/booking_done/', methods=['POST'])
 def booking_done():
+    """
+    Process booking of a teacher
+    :return:
+    """
     weekday_key = request.form.get('clientWeekday')
     time_of_day = request.form.get('clientTime')
     id_teacher = request.form.get('clientTeacher')
@@ -141,7 +201,7 @@ def booking_done():
     booking_file_path = 'booking.json'
     data = dict()
 
-    # Check if file for booking exists
+    # Check if file for booking exists and create it if not
     if os.path.exists(booking_file_path):
         with open(booking_file_path, "r") as f:
             data = json.load(f)
@@ -152,8 +212,11 @@ def booking_done():
 
     day_of_week = Data().days_of_week[weekday_key]
 
-    return render_template('booking_done.html', day_of_week=day_of_week, client_name=client_name,
-                           client_phone=client_phone, time_of_day=time_of_day)
+    return render_template('booking_done.html',
+                           day_of_week=day_of_week,
+                           client_name=client_name,
+                           client_phone=client_phone,
+                           time_of_day=time_of_day)
 
 
 @app.errorhandler(404)
