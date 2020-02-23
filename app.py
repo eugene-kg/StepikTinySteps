@@ -6,16 +6,101 @@ from flask import Flask, render_template, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tiny_steps.db"
 db = SQLAlchemy(app)
 migrate = Migrate(app=app, db=db)
 
+teacher_goal_association = db.Table(
+    'teacher_goal_association',
+    db.Column('goal', db.String(20), db.ForeignKey('dic_goals.goal'),
+              nullable=False, primary_key=True),
+    db.Column('id_teacher', db.Integer, db.ForeignKey('teachers.id'),
+              nullable=False, primary_key=True)
+)
+
+
+class Teacher(db.Model):
+    __tablename__ = 'teachers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    about = db.Column(db.String(500))
+    rating = db.Column(db.Float)
+    picture = db.Column(db.String(500))
+    price = db.Column(db.Integer)
+    free = db.Column(db.String(2000))
+
+    goals = db.relationship('Goal', secondary=teacher_goal_association,
+                            back_populates='teachers')
+    bookings = db.relationship('Booking', back_populates='teacher')
+
+
+class AvailableTime(db.Model):
+    __tablename__ = 'dic_available_time'
+
+    time_key = db.Column(db.String(10), primary_key=True)
+    rus_name = db.Column(db.String(100))
+
+
+class DaysOfWeek(db.Model):
+    __tablename__ = 'dic_days_of_week'
+
+    weekday_key = db.Column(db.String(3), primary_key=True)
+    rus_name = db.Column(db.String(50))
+    rus_short_name = db.Column(db.String(2))
+
+
+class DicGoals(db.Model):
+    __tablename__ = 'dic_goals'
+
+    goal = db.Column(db.String(20), primary_key=True)
+    rus_name = db.Column(db.String(50))
+    emblem = db.Column(db.String(100))
+
+    teachers = db.relationship('Teacher', secondary=teacher_goal_association,
+                               back_populates='goals')
+
+
+class Booking(db.Model):
+    __tablename__ = 'booking'
+    id = db.Column(db.Integer, primary_key=True)
+    id_teacher = db.Column(db.Integer, db.ForeignKey('teachers.id'),
+                           nullable=False)
+    weekday_key = db.Column(db.String(3),
+                            db.ForeignKey('dic_days_of_week.weekday_key'),
+                            nullable=False)
+    time_of_day = db.Column(db.String(10), nullable=False)
+
+    teacher = db.relationship('Teacher', back_populates='bookings')
+    weekday = db.relationship('DaysOfWeek')
+
+    __table_args__ = (db.Index('teacher_weekday_tod_idx',
+                               id_teacher,
+                               weekday_key,
+                               time_of_day,
+                               unique=True),)
+
+class RequestForTeacher(db.Model):
+    __tablename__ = 'requests_for_teacher'
+    id = db.Column(db.Integer, primary_key=True)
+    goal = db.Column(db.String(20), db.ForeignKey('dic_goals.goal'), nullable=False)
+    time = db.Column(db.String(10), db.ForeignKey('dic_available_time.time_key'), nullable=False)
+    client_name = db.Column(db.String(100), nullable=False)
+    client_phone = db.Column(db.String(50), nullable=False)
+
+    goal_description = db.relationship('DicGoals')
+    available_time = db.relationship('AvailableTime')
+
+    __table_args__ = (db.UniqueConstraint(goal,
+                                          time,
+                                          client_name,
+                                          client_phone,
+                                          name='client_goal_uix'),)
+
 
 class Data:
     def __init__(self):
-
         with open('data.json', 'r') as f:
             data = json.load(f)
 
@@ -233,5 +318,5 @@ def server_error(e):
 app.run()
 
 # Run server with gunicorn
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #    app.run()
