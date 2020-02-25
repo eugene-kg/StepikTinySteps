@@ -6,6 +6,7 @@ from flask import Flask, render_template, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tiny_steps.db"
 db = SQLAlchemy(app)
@@ -80,6 +81,7 @@ class Booking(db.Model):
                                weekday_key,
                                time_of_day,
                                unique=True),)
+
 
 class RequestForTeacher(db.Model):
     __tablename__ = 'requests_for_teacher'
