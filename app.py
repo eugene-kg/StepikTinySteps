@@ -32,7 +32,7 @@ class Teacher(db.Model):
     price = db.Column(db.Integer)
     free = db.Column(db.String(2000))
 
-    goals = db.relationship('Goal', secondary=teacher_goal_association,
+    goals = db.relationship('DicGoals', secondary=teacher_goal_association,
                             back_populates='teachers')
     bookings = db.relationship('Booking', back_populates='teacher')
 
@@ -105,16 +105,13 @@ class Data:
     def __init__(self):
         with open('data.json', 'r') as f:
             data = json.load(f)
-
-        self.__goals = data['goals']
+        #
+        # self.__goals = data['goals']
         self.__days_of_week = data['days_of_week']
         self.__teachers = data['teachers']
         self.__available_time = data['available_time']
-
-    def get_teacher(self, id_teacher):
-        teacher = list(filter(lambda t: t['id'] == 0, self.teachers))[0]
-
-        return teacher
+        self.__goals = db.session.query(DicGoals).all()
+        #self.__days_of_week =
 
     @property
     def goals(self):
@@ -131,6 +128,14 @@ class Data:
     @property
     def available_time(self):
         return self.__available_time
+
+    def get_teacher(self, id_teacher):
+        teacher = list(filter(lambda t: t['id'] == 0, self.teachers))[0]
+        return teacher
+
+    def get_goal(self, goal):
+        the_goal = list(filter(lambda t: t['id'] == 0, self.goals))[0]
+        return the_goal
 
 
 @app.route('/')
@@ -155,6 +160,7 @@ def goal(goal):
     :return: page with list of teachers
     """
     data = Data()
+    the_goal = data.get_goal(goal)
 
     # Keep only teachers who has the goal in their list of goals
     teachers_with_goal = list(filter(lambda t: goal in t['goals'],
@@ -162,8 +168,7 @@ def goal(goal):
 
     return render_template('goal.html',
                            teachers=teachers_with_goal,
-                           goal=goal,
-                           goals=data.goals)
+                           goal=the_goal)
 
 
 @app.route('/profiles/<id_teacher>/')
