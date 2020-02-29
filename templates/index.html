@@ -7,7 +7,7 @@
     <div class="text-center mb-5">
       <div class="btn-group mx-auto mb-0" role="group" aria-label="Basic example">
         {% for goal in goals %}
-          {% set goal_link = "/goal/{}/".format(goal.goal) %}
+          {% set goal_link = "/goal/{}/".format(goal.goal_key) %}
           <a href="{{ goal_link }}" class="btn btn-outline-secondary">{{ goal['emblem'] }} {{ goal['rus_name'] }}</a>
         {% endfor %}
       </div>

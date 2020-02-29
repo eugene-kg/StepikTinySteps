@@ -10,8 +10,9 @@
           <div class="col-7">
             <h1 class="h2">{{ teacher.name }}</h1>
             <p>
-              {% for goal_key in teacher.goals %}
-                <span class="badge badge-secondary mr-2">{{ goals[goal_key]['rus_name'] }} </span>
+              {% for goal in teacher.goals %}
+                {# select goal by attribute, convert to list and taking last (it's supposed to be unique #}
+                <span class="badge badge-secondary mr-2">{{ (goals|selectattr('goal_key', '==', goal.goal_key)|list|last).rus_name }} </span>
               {% endfor %}
               Рейтинг: {{ teacher.rating }} Ставка: {{ teacher.price }} / час
             </p>

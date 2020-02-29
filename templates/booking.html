@@ -9,12 +9,12 @@
             <img src="{{ teacher.picture }}" class="mb-3" width="95" alt="Place for a picture">
             <h2 class="h5 card-title mt-2 mb-2">{{ teacher.name }}</h2>
             <p class="my-1">Запись на пробный урок</p>
-            <p class="my-1">{{ day_of_week['rus_name'] }}, {{ time_of_day }}</p>
+            <p class="my-1">{{ day_of_week.rus_name }}, {{ time_of_day }}</p>
           </div>
           <hr />
           <div class="card-body mx-3">
               <div class="row">
-                  <input class="form-control" type="hidden" name="clientWeekday" value="{{ day_of_week['weekday_key'] }}">
+                  <input class="form-control" type="hidden" name="clientWeekday" value="{{ day_of_week.weekday_key }}">
                   <input class="form-control" type="hidden" name="clientTime" value="{{ time_of_day }}">
                   <input class="form-control" type="hidden" name="clientTeacher" value="{{ teacher['id'] }}">
               </div>

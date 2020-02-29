@@ -14,7 +14,7 @@ migrate = Migrate(app=app, db=db)
 
 teacher_goal_association = db.Table(
     'teacher_goal_association',
-    db.Column('goal', db.String(20), db.ForeignKey('dic_goals.goal'),
+    db.Column('goal_key', db.String(20), db.ForeignKey('dic_goals.goal_key'),
               nullable=False, primary_key=True),
     db.Column('id_teacher', db.Integer, db.ForeignKey('teachers.id'),
               nullable=False, primary_key=True)
@@ -55,7 +55,7 @@ class DaysOfWeek(db.Model):
 class DicGoals(db.Model):
     __tablename__ = 'dic_goals'
 
-    goal = db.Column(db.String(20), primary_key=True)
+    goal_key = db.Column(db.String(20), primary_key=True)
     rus_name = db.Column(db.String(50))
     emblem = db.Column(db.String(100))
 
@@ -86,16 +86,16 @@ class Booking(db.Model):
 class RequestForTeacher(db.Model):
     __tablename__ = 'requests_for_teacher'
     id = db.Column(db.Integer, primary_key=True)
-    goal = db.Column(db.String(20), db.ForeignKey('dic_goals.goal'), nullable=False)
-    time = db.Column(db.String(10), db.ForeignKey('dic_available_time.time_key'), nullable=False)
+    goal_key = db.Column(db.String(20), db.ForeignKey('dic_goals.goal_key'), nullable=False)
+    time_key = db.Column(db.String(10), db.ForeignKey('dic_available_time.time_key'), nullable=False)
     client_name = db.Column(db.String(100), nullable=False)
     client_phone = db.Column(db.String(50), nullable=False)
 
     goal_description = db.relationship('DicGoals')
     available_time = db.relationship('AvailableTime')
 
-    __table_args__ = (db.UniqueConstraint(goal,
-                                          time,
+    __table_args__ = (db.UniqueConstraint(goal_key,
+                                          time_key,
                                           client_name,
                                           client_phone,
                                           name='client_goal_uix'),)
@@ -103,39 +103,39 @@ class RequestForTeacher(db.Model):
 
 class Data:
     def __init__(self):
-        with open('data.json', 'r') as f:
-            data = json.load(f)
-        #
-        # self.__goals = data['goals']
-        self.__days_of_week = data['days_of_week']
-        self.__teachers = data['teachers']
-        self.__available_time = data['available_time']
-        self.__goals = db.session.query(DicGoals).all()
-        #self.__days_of_week =
+
+        self.__goals = db.session.query(DicGoals)
+        self.__days_of_week = db.session.query(DaysOfWeek)
+        self.__teachers = db.session.query(Teacher)
+        self.__available_time = db.session.query(AvailableTime)
 
     @property
     def goals(self):
-        return self.__goals
+        return self.__goals.all()
 
     @property
     def days_of_week(self):
-        return self.__days_of_week
+        return self.__days_of_week.all()
 
     @property
     def teachers(self):
-        return self.__teachers
+        return self.__teachers.all()
 
     @property
     def available_time(self):
-        return self.__available_time
+        return self.__available_time.all()
 
     def get_teacher(self, id_teacher):
-        teacher = list(filter(lambda t: t['id'] == 0, self.teachers))[0]
+        teacher = self.__teachers.filter_by(id=id_teacher).first()
         return teacher
 
-    def get_goal(self, goal):
-        the_goal = list(filter(lambda t: t['id'] == 0, self.goals))[0]
-        return the_goal
+    def get_goal(self, goal_key):
+        goal = self.__goals.filter_by(goal_key=goal_key).first()
+        return goal
+
+    def get_day_of_week(self, weekday_key):
+        day_of_week = self.__days_of_week.filter_by(weekday_key=weekday_key).first()
+        return day_of_week
 
 
 @app.route('/')
@@ -152,23 +152,24 @@ def main():
                            teachers=teachers)
 
 
-@app.route('/goals/<goal>/')
-def goal(goal):
+@app.route('/goal/<goal_key>/')
+def goal(goal_key):
     """
     Show list of teacher which can help to train for a specific goal
-    :param goal: goal of studying
+    :param goal_key: goal of studying
     :return: page with list of teachers
     """
     data = Data()
-    the_goal = data.get_goal(goal)
+    goal = data.get_goal(goal_key)
 
     # Keep only teachers who has the goal in their list of goals
-    teachers_with_goal = list(filter(lambda t: goal in t['goals'],
+    teachers_with_goal = list(filter(lambda t: goal.goal_key in
+                                               [g.goal_key for g in t.goals],
                                      data.teachers))
 
     return render_template('goal.html',
                            teachers=teachers_with_goal,
-                           goal=the_goal)
+                           goal=goal)
 
 
 @app.route('/profiles/<id_teacher>/')
@@ -181,13 +182,14 @@ def get_profile(id_teacher):
     id_teacher = int(id_teacher)
     data = Data()
     teacher = data.get_teacher(id_teacher)
-    if 'id' not in teacher:
-        abort(404, description="Teacher not found")
+    if not teacher:
+        abort(404, description="Teacher is not found")
 
     # Re-arranging dictionary of teacher time-table
     # to simplify logic in the template
     time_table = dict()
-    for weekday_key, time_status in teacher['free'].items():
+    time_table_data = json.loads(teacher.free)
+    for weekday_key, time_status in time_table_data.items():
         for time_of_day, status in time_status.items():
             if time_of_day in time_table:
                 time_table[time_of_day][weekday_key] = status
@@ -218,14 +220,14 @@ def request_done():
     Process data from request for a teacher
     :return:
     """
-    request_goal = request.form.get('goal')
-    request_time = request.form.get('time')
+    request_goal_key = request.form.get('goal_key')
+    request_time = request.form.get('time_key')
     client_name = request.form.get('clientName')
     client_phone = request.form.get('clientPhone')
 
     request_details = dict()
-    request_details['goal'] = request_goal
-    request_details['time'] = request_time
+    request_details['goal_key'] = request_goal_key
+    request_details['time_key'] = request_time
     request_details['client_name'] = client_name
     request_details['client_phone'] = client_phone
 
@@ -259,9 +261,9 @@ def booking_teacher(id_teacher, weekday_key, time_of_day):
     """
     data = Data()
     teacher = data.get_teacher(int(id_teacher))
-    if 'id' not in teacher:
-        abort(404, description="Teacher not found")
-    day_of_week = data.days_of_week[weekday_key]
+    if not teacher:
+        abort(404, description="Teacher is not found")
+    day_of_week = data.get_day_of_week(weekday_key)
 
     return render_template('booking.html',
                            teacher=teacher,
@@ -291,18 +293,19 @@ def booking_done():
     new_booking['client_phone'] = client_phone
 
     booking_file_path = 'booking.json'
-    data = dict()
+    booking_data = dict()
 
     # Check if file for booking exists and create it if not
     if os.path.exists(booking_file_path):
         with open(booking_file_path, "r") as f:
-            data = json.load(f)
+            booking_data = json.load(f)
 
-    data[booking_key] = new_booking
+    booking_data[booking_key] = new_booking
     with open(booking_file_path, 'w') as f:
-        json.dump(data, f)
+        json.dump(booking_data, f)
 
-    day_of_week = Data().days_of_week[weekday_key]
+    data = Data()
+    day_of_week = data.get_day_of_week(weekday_key)
 
     return render_template('booking_done.html',
                            day_of_week=day_of_week,

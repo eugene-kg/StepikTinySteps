@@ -14,33 +14,34 @@
           <div class="row">
             <div class="col">
               <p>Какая цель занятий?</p>
-              {% for goal, goal_details in goals.items() %}
-                {% if goal == "travel" %}
+              {% for goal in goals %}
+                {% if goal.goal_key == "travel" %}
                   {% set is_checked = "checked" %}
                 {% else %}
                   {% set is_checked = "" %}
                 {% endif %}
                 <div class="form-check" >
-                    <input type="radio" class="form-check-input" name="goal" value="{{ goal }}" id={{ goal }} {{ is_checked }}>
+                    <input type="radio" class="form-check-input" name="goal_key" value="{{ goal.goal_key }}"
+                           id={{ goal.goal_key }} {{ is_checked }}>
                     <label class="form-check-label" for={{ goal }}>
-                      {{ goal_details['rus_name'] }}
+                      {{ goal['rus_name'] }}
                     </label>
                 </div>
               {% endfor %}
             </div>
             <div class="col">
               <p>Сколько времени есть?</p>
-              {% for available_time_key, available_time_details in available_time.items() %}
-                {% if available_time_key == "1-2" %}
+              {% for avlbl_time in available_time %}
+                {% if avlbl_time.time_key == "1-2" %}
                   {% set is_checked = "checked" %}
                 {% else %}
                   {% set is_checked = "" %}
                 {% endif %}
                 <div class="form-check">
-                  <input type="radio" class="form-check-input" name="time" value={{ available_time_key }}
-                         id={{ available_time_key }} {{ is_checked }}>
-                  <label class="form-check-label" for={{ available_time_key }}>
-                    {{ available_time_details['rus_name'] }}
+                  <input type="radio" class="form-check-input" name="time_key" value={{ avlbl_time.time_key }}
+                         id={{ avlbl_time.time_key }} {{ is_checked }}>
+                  <label class="form-check-label" for={{ avlbl_time.time_key }}>
+                    {{ avlbl_time.rus_name }}
                   </label>
                 </div>
               {% endfor %}

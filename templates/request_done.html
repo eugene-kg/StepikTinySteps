@@ -13,8 +13,8 @@
           </div>
           <hr />
           <div class="card-body mx-5">
-            <p><b>Цель занятий:</b> {{ goals[request_details['goal']]['rus_name'] }}</p>
-            <p><b>Времени есть:</b> {{ available_time[request_details['time']]['rus_name'] }}</p>
+            <p><b>Цель занятий:</b> {{ (goals|selectattr('goal_key', '==', request_details['goal_key'])|list|last)['rus_name'] }}</p>
+            <p><b>Времени есть:</b> {{ (available_time|selectattr('time_key', '==', request_details['time_key'])|list|last)['rus_name'] }}</p>
             <p><b>Имя:</b> {{ request_details['client_name'] }}</p>
             <p><b>Телефон:</b> {{ request_details['client_phone'] }}</p>
           </div>
