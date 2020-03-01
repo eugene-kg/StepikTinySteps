@@ -242,10 +242,10 @@ def request_for_teacher():
         if request_form.validate_on_submit():
             rq_for_teacher = RequestForTeacher()
 
-            rq_for_teacher.goal_key = request_form.goal_key
-            rq_for_teacher.time_key = request_form.time_key
-            rq_for_teacher.client_name = request_form.client_name
-            rq_for_teacher.client_phone = request_form.client_phone
+            rq_for_teacher.goal_key = request_form.goal_key.data
+            rq_for_teacher.time_key = request_form.time_key.data
+            rq_for_teacher.client_name = request_form.client_name.data
+            rq_for_teacher.client_phone = request_form.client_phone.data
 
             db.session.add(rq_for_teacher)
             db.session.commit()
