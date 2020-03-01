@@ -5,12 +5,18 @@ import random
 from flask import Flask, render_template, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
+from flask_wtf import FlaskForm
+from wtforms import StringField, IntegerField, RadioField
+from wtforms.validators import InputRequired, Length
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tiny_steps.db"
+app.secret_key = 'fdopa7435nhf&%%$)(nf'
 db = SQLAlchemy(app)
 migrate = Migrate(app=app, db=db)
+csrf = CSRFProtect(app)
+
 
 teacher_goal_association = db.Table(
     'teacher_goal_association',
@@ -72,6 +78,8 @@ class Booking(db.Model):
                             db.ForeignKey('dic_days_of_week.weekday_key'),
                             nullable=False)
     time_of_day = db.Column(db.String(10), nullable=False)
+    client_name = db.Column(db.String(100), nullable=False)
+    client_phone = db.Column(db.String(50), nullable=False)
 
     teacher = db.relationship('Teacher', back_populates='bookings')
     weekday = db.relationship('DaysOfWeek')
@@ -101,9 +109,16 @@ class RequestForTeacher(db.Model):
                                           name='client_goal_uix'),)
 
 
+class BookingForm(FlaskForm):
+    weekday_key = StringField('clientWeekday')
+    time_of_day = StringField('clientTime')
+    id_teacher = IntegerField('clientTeacher')
+    client_name = StringField('Вас зовут', [InputRequired(message="Укажите ваше имя"), Length(min=1)])
+    client_phone = StringField('Ваш телефон', [InputRequired(message="Укажите ваш телефон")])
+
+
 class Data:
     def __init__(self):
-
         self.__goals = db.session.query(DicGoals)
         self.__days_of_week = db.session.query(DaysOfWeek)
         self.__teachers = db.session.query(Teacher)
@@ -138,6 +153,17 @@ class Data:
         return day_of_week
 
 
+class RequestForm(FlaskForm):
+
+    goals = Data().goals
+    available_time = Data().available_time
+
+    goal_key = RadioField('Какая цель занятий?', choices=[(goal.goal_key, goal.rus_name) for goal in goals])
+    time_key = RadioField('Какая цель занятий?', choices=[(tm.time_key, tm.rus_name) for tm in available_time])
+    client_name = StringField('Вас зовут', [InputRequired(message="Укажите ваше имя"), Length(min=1)])
+    client_phone = StringField('Ваш телефон', [InputRequired(message="Укажите ваш телефон")])
+
+
 @app.route('/')
 def main():
     """
@@ -163,9 +189,10 @@ def goal(goal_key):
     goal = data.get_goal(goal_key)
 
     # Keep only teachers who has the goal in their list of goals
-    teachers_with_goal = list(filter(lambda t: goal.goal_key in
-                                               [g.goal_key for g in t.goals],
-                                     data.teachers))
+    gl: object
+    teachers_with_goal = list(filter(
+        lambda t: goal.goal_key in [gl.goal_key for gl in t.goals],
+        data.teachers))
 
     return render_template('goal.html',
                            teachers=teachers_with_goal,
@@ -202,16 +229,36 @@ def get_profile(id_teacher):
                            time_table=time_table)
 
 
-@app.route('/request/')
+@app.route('/request/', methods=['POST', 'GET'])
 def request_for_teacher():
     """
     Open form with request for a teacher
     :return:
     """
     data = Data()
+    request_form = RequestForm()
+
+    if request.method == 'POST':
+        if request_form.validate_on_submit():
+            rq_for_teacher = RequestForTeacher()
+
+            rq_for_teacher.goal_key = request_form.goal_key
+            rq_for_teacher.time_key = request_form.time_key
+            rq_for_teacher.client_name = request_form.client_name
+            rq_for_teacher.client_phone = request_form.client_phone
+
+            db.session.add(rq_for_teacher)
+            db.session.commit()
+
+            return render_template('request_done.html',
+                                   request_details=rq_for_teacher,
+                                   available_time=data.available_time,
+                                   goals=data.goals)
+
     return render_template('request.html',
                            goals=data.goals,
-                           available_time=data.available_time)
+                           available_time=data.available_time,
+                           form=request_form)
 
 
 @app.route('/request_done/', methods=["POST"])
@@ -250,7 +297,7 @@ def request_done():
                            goals=data.goals)
 
 
-@app.route('/booking/<id_teacher>/<weekday_key>/<time_of_day>/')
+@app.route('/booking/<id_teacher>/<weekday_key>/<time_of_day>/', methods=['POST', 'GET'])
 def booking_teacher(id_teacher, weekday_key, time_of_day):
     """
     Form for booking a teacher
@@ -259,59 +306,40 @@ def booking_teacher(id_teacher, weekday_key, time_of_day):
     :param time_of_day:
     :return:
     """
+
     data = Data()
     teacher = data.get_teacher(int(id_teacher))
     if not teacher:
         abort(404, description="Teacher is not found")
     day_of_week = data.get_day_of_week(weekday_key)
 
+    booking_form = BookingForm()
+
+    if request.method == 'POST':
+
+        booking = Booking()
+
+        if booking_form.validate_on_submit():
+            booking.id_teacher = id_teacher
+            booking.time_of_day = time_of_day
+            booking.weekday_key = day_of_week.weekday_key
+            booking.client_name = booking_form.client_name.data
+            booking.client_phone = booking_form.client_phone.data
+
+            db.session.add(booking)
+            db.session.commit()
+
+            return render_template('booking_done.html',
+                                   day_of_week=booking.weekday,
+                                   client_name=booking.client_name,
+                                   client_phone=booking.client_phone,
+                                   time_of_day=booking.time_of_day)
+
     return render_template('booking.html',
                            teacher=teacher,
                            time_of_day=time_of_day,
-                           day_of_week=day_of_week)
-
-
-@app.route('/booking_done/', methods=['POST'])
-def booking_done():
-    """
-    Process booking of a teacher
-    :return:
-    """
-    weekday_key = request.form.get('clientWeekday')
-    time_of_day = request.form.get('clientTime')
-    id_teacher = request.form.get('clientTeacher')
-    client_name = request.form.get('clientName')
-    client_phone = request.form.get('clientPhone')
-
-    new_booking = dict()
-    booking_key = '{}_{}_{}'.format(id_teacher, weekday_key, time_of_day)
-
-    new_booking['weekday_key'] = weekday_key
-    new_booking['time_of_day'] = time_of_day
-    new_booking['id_teacher'] = id_teacher
-    new_booking['client_name'] = client_name
-    new_booking['client_phone'] = client_phone
-
-    booking_file_path = 'booking.json'
-    booking_data = dict()
-
-    # Check if file for booking exists and create it if not
-    if os.path.exists(booking_file_path):
-        with open(booking_file_path, "r") as f:
-            booking_data = json.load(f)
-
-    booking_data[booking_key] = new_booking
-    with open(booking_file_path, 'w') as f:
-        json.dump(booking_data, f)
-
-    data = Data()
-    day_of_week = data.get_day_of_week(weekday_key)
-
-    return render_template('booking_done.html',
                            day_of_week=day_of_week,
-                           client_name=client_name,
-                           client_phone=client_phone,
-                           time_of_day=time_of_day)
+                           form=booking_form)
 
 
 @app.errorhandler(404)
